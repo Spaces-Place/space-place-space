@@ -1,6 +1,4 @@
-from typing import Dict
 from pydantic import BaseModel, Field
-from typing import Dict
 
 class Coordinate(BaseModel):
     latitude: str = Field(description="위도")

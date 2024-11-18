@@ -18,6 +18,7 @@ def get_config_value(name: str) -> str:
 def get_parameter_from_ssm(name: str) -> str:
     try:
         parameter = ssm.get_parameter(Name=name, WithDecryption=True)
+        print(parameter)
         return parameter['Parameter']['Value']
     except ssm.exceptions.ParameterNotFound:
         raise HTTPException(
@@ -48,7 +49,7 @@ def get_jwt_secret_key() -> str:
     return get_config_value("USER_JWT_SECRET")
 
 def get_space_secret_key() -> str:
-    return get_config_value("SPACE_S3_SECRET_KEY")
+    return get_parameter_from_ssm("SPACE_S3_SECRET_KEY")
 
 def get_space_access_key() -> str:
-    return get_config_value("SPACE_S3_ACCESS_KEY")
+    return get_parameter_from_ssm("SPACE_S3_ACCESS_KEY")

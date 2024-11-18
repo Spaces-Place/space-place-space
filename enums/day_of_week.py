@@ -4,10 +4,10 @@ class DayOfWeek(Enum):
     def _generate_next_value_(name, start, count, last_values):
         return name
     
-    monday = auto() # 월
-    tuesday = auto() # 화
-    wednesday = auto() # 수
-    thursday = auto() # 목
-    friday = auto() # 금
-    saturday = auto() # 토
-    sunday = auto() # 일
+    MONDAY = auto() # 월
+    TUESDAY = auto() # 화
+    WEDNESDAY = auto() # 수
+    THURSDAY = auto() # 목
+    FRIDAY = auto() # 금
+    SATURDAY = auto() # 토
+    SUNDAY = auto() # 일

@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from typing import List, Optional
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from routers.space import space_router
 
@@ -15,6 +18,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+class Item(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class DataModel(BaseModel):
+    items: List[Item]
+    title: str
+
+@app.post("/upload/")
+async def upload(data: DataModel, file: UploadFile = File(...)):
+    file_location = f"files/{file.filename}"
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    return JSONResponse(content={"message": "파일 업로드 성공", "data": data.dict()})
 
 if __name__ == "__main__":
     import uvicorn

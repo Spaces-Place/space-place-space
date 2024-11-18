@@ -9,8 +9,7 @@ from models.location import Location
 from models.operation import Operation
 
 
-class SpaceModel(BaseModel):
-    service_id: str
+class Space(BaseModel):
     vendor_id: str
     space_type: SpaceType
     name: str
