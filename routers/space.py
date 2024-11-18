@@ -1,9 +1,11 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from database import get_database
 from enums.space_type import SpaceType
 from schemas.common import BaseResponse
-from schemas.space import SpaceCreate, SpaceCreateResponse, SpaceListResponse, SpaceResponse, SpaceUpdate
+from schemas.location import Coordinate, Location
+from schemas.operating_hour import OperatingHour
+from schemas.space import SpaceCreate, SpaceRequest, SpaceCreateResponse, SpaceListResponse, SpaceResponse, SpaceUpdate, get_space_form
 from services import space_service
 from utils.authenticate import userAuthenticate
 from utils.s3_config import s3_bucket
@@ -15,11 +17,26 @@ space_router = APIRouter(
 
 # 공간 등록
 @space_router.post("/", response_model=SpaceCreateResponse, status_code=status.HTTP_201_CREATED, summary="공간 등록")
-async def create_space(space: SpaceCreate, token_info=Depends(userAuthenticate)):
+async def create_space(
+    space_data: SpaceRequest = Depends(get_space_form),
+    images: List[UploadFile] = File(...), 
+    token_info=Depends(userAuthenticate),
+    db = Depends(get_database), 
+    s3 = Depends(s3_bucket)
+):
     """ Authorization: Bearer {token} """
+
+    # TODO: 토큰 안 받는 형식 고려 (formData에 추가하는 방식)
+    if token_info["user_id"] != space_data.user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="로그인을 다시 해주세요")
     
-    space.vendor_id = token_info["user_id"]
-    space_id = await space_service.create_space(space)
+    space = SpaceCreate(
+        **space_data.model_dump(),
+        images=images
+    )
+
+    space_id = await space_service.create_space(space, db, s3)
+    
     return SpaceCreateResponse(
         message="공간이 등록되었습니다.", 
         space_id= space_id
@@ -49,14 +66,21 @@ async def get_space(space_id: str, db = Depends(get_database)):
 
 # 공간 수정 
 @space_router.put("/{space_id}", response_model=BaseResponse, status_code=status.HTTP_200_OK, summary="공간 수정")
-async def update_spaces(space_id: str, space: SpaceUpdate, token_info=Depends(userAuthenticate)):
+async def update_spaces(space_id: str, space_data: SpaceUpdate, images: List[UploadFile], token_info=Depends(userAuthenticate)):
     """ Authorization: Bearer {token} """
 
-    await space_service.update_spaces(token_info["id"], space_id, space)
+    space = SpaceUpdate(
+        **space_data.model_dump(),
+        user_id = token_info["user_id"],
+        space_id = space_id,
+        images = images
+    )
+
+    await space_service.update_spaces(token_info["user_id"], space)
     return BaseResponse(message = "공간이 정상적으로 수정되었습니다.")
 
 # 공간 삭제
-@space_router.delete("/{space_id}", response_model=BaseResponse, status_code=status.HTTP_204_NO_CONTENT, summary="공간 삭제")
+@space_router.delete("/{space_id}", response_model=BaseResponse, status_code=status.HTTP_200_OK, summary="공간 삭제")
 async def delete_space(space_id: str, token_info=Depends(userAuthenticate)):
     await space_service.delete_space(space_id, token_info["user_id"])
     return BaseResponse(message="공간이 삭제되었습니다.")
