@@ -33,11 +33,29 @@ class AWSConfig:
     # 자격 증명
     def get_credentials(self):
         if self._credentials is None:
-            self._credentials = {
-                'aws_access_key': self._get_config_value("SPACE_ACCESS_KEY"),
-                'aws_secret_key': self._get_config_value("SPACE_SECRET_KEY"),
-                'aws_region': self._region
-            }
+            
+            if os.getenv('ENV') == 'development':
+                self._credentials = {
+                    'aws_access_key': os.getenv('SPACE_ACCESS_KEY'),
+                    'aws_secret_key': os.getenv('SPACE_SECRET_KEY'),
+                    'aws_region': self._region
+                }
+
+            else:
+                try:
+                    with open("/etc/secret-volume/access", "r") as access_file:
+                        self._credentials['access_key'] = access_file.read().strip()
+
+                    with open("/etc/secret-volume/secret", "r") as secret_file:
+                        self._credentials['secret_key'] = secret_file.read().strip()
+                    
+                    self._credentials['aws_region'] = self._region
+                except FileNotFoundError as e:
+                    print(f"파일을 찾을 수 없습니다: {e}")
+                except Exception as e:
+                    print(f"오류 발생: {e}")
+
+
         return self._credentials
 
     # 환경에 따른 값 추출
