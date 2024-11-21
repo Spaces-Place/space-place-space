@@ -1,8 +1,5 @@
-from enum import Enum, auto
+from enum import Enum
 
-class UsageType(Enum):
-    def _generate_next_value_(name, start, count, last_values):
-        return name
-    
-    TIME = auto() # 시
-    DAY = auto() # 일
+class UsageType(str, Enum):
+    TIME = "TIME" # 시
+    DAY = "DAY" # 일
