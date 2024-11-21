@@ -1,7 +1,10 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from utils.aws_ssm_key import get_space_db_host, get_space_db_name
+from services.aws_service import get_aws_service
+
 
 # MongoDB 클라이언트 생성
-async def get_database():
-    client = AsyncIOMotorClient(get_space_db_host())
-    return client[get_space_db_name()]
+async def get_database() -> AsyncIOMotorClient:
+    aws_service = get_aws_service()
+    db_config = aws_service.config.get_db_config() # DB 설정 가져오기
+    client = AsyncIOMotorClient(db_config['host'])
+    return client[db_config['name']]
