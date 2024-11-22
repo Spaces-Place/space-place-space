@@ -11,6 +11,7 @@ class DatabaseConfig:
             return {
                 'host': os.getenv('SPACE_DB_HOST'),
                 'dbname': os.getenv('SPACE_DB_NAME'),
+                'username': os.getenv('SPACE_DB_USERNAME'),
                 'password': os.getenv('SPACE_DB_PASSWORD')
             }
         else:
@@ -23,6 +24,7 @@ class DatabaseConfig:
             return {
                 'host': parameter_store.get_parameter("SPACE_DB_HOST"),
                 'dbname': parameter_store.get_parameter("SPACE_DB_NAME"),
+                'username': parameter_store.get_parameter("SPACE_DB_USERNAME"),
                 'password': parameter_store.get_parameter("SPACE_DB_PASSWORD")
             }
         
