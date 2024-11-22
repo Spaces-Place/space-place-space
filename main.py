@@ -7,8 +7,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pymongo.errors import OperationFailure
 
-from database import get_database
 from routers.space import space_router
+from utils.mongodb import get_database
 
 
 app = FastAPI(title="공간 API", version="ver.1")

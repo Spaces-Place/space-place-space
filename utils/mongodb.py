@@ -47,7 +47,7 @@ class MongoDBClient:
 
     @property
     def database(self) -> AsyncIOMotorDatabase:
-        if not self._database:
+        if self._database is None:
             raise RuntimeError("MongoDB 데이터베이스가 초기화되지 않았습니다.")
         return self._database
 
