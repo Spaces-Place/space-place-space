@@ -1,11 +1,11 @@
 from typing import Dict, Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from services.aws_service import get_aws_service
+from services.aws_service import AWSService, get_aws_service
 
 
 class MongoDBClient:
-    def __init__(self, aws_service):
+    def __init__(self, aws_service: AWSService):
         self.aws_service = aws_service
         self._client: Optional[AsyncIOMotorClient] = None
         self._database: Optional[AsyncIOMotorDatabase] = None
@@ -30,12 +30,13 @@ class MongoDBClient:
         
         # 인증 포함 연결 문자열 생성
         host = db_config['host']
+        dbname = db_config['dbname']
         username = db_config['username']
         password = db_config['password']
         
     # 다양한 연결 문자열 형식 지원  
         if username and password:
-            return f"mongodb://{username}:{password}@{host}"
+            return f"mongodb://{username}:{password}@{host}:27017/{dbname}"
         return host
 
     @property
