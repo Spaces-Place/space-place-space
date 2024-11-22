@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -13,6 +15,9 @@ app = FastAPI(title="공간 API", version="ver.1")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    env_type = '.env.development' if os.getenv('APP_ENV') == 'development' else '.env.production'
+    load_dotenv(env_type)
+
     db = await get_database()
     
     try:
@@ -30,7 +35,7 @@ async def lifespan(app: FastAPI):
             
     except OperationFailure as e:
         pass
-        # print(f"인덱스 오류 : {e}")
+        # print(f"인덱스 생성 오류 : {e}")
     
     yield
 

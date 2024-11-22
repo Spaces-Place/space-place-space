@@ -1,12 +1,12 @@
 from time import time
-from fastapi import Depends, HTTPException, status
+from fastapi import HTTPException, status
 from jose import jwt
 
-from utils.aws_config import AWSConfig
+from services.aws_service import get_aws_service
 
 # JWT 토큰 검증
-def verify_jwt_token(token: str, aws_config: AWSConfig) -> dict:
-    secret = aws_config.get_jwt_secret()
+def verify_jwt_token(token: str) -> dict:
+    secret = get_aws_service().get_jwt_secret()
 
     try:
         payload = jwt.decode(token, secret, algorithms=["HS256"])
