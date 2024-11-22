@@ -3,12 +3,13 @@ from typing import Dict, List, Optional
 from bson import ObjectId
 from fastapi import Depends, HTTPException, Query, status
 
-from database import get_database
 from enums.space_type import SpaceType
 from schemas.space_request import SpaceRequest, SpaceUpdateRequest
 from schemas.space_response import SpaceResponse
 from services.aws_service import AWSService, get_aws_service
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from utils.mongodb import get_database
 
 
 async def get_space_service(db: AsyncIOMotorClient = Depends(get_database), aws_service: AWSService = Depends(get_aws_service)):
