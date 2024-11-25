@@ -4,15 +4,22 @@ from typing import Dict
 
 from utils.aws_ssm import ParameterStore
 from utils.credential import Credential
-from utils.database_config import DatabaseConfig
+from utils.env_config import EnvConfig
 
 
 class AWSService:
-    def __init__(self):
-        self._credentials = Credential.get_credentials()
-        self._parameter_store = ParameterStore(self._credentials)
-        self._database_config = DatabaseConfig(os.getenv('APP_ENV'))
-
+    
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(AWSService, cls).__new__(cls)
+            cls._env_config = EnvConfig()
+            cls._credentials = Credential.get_credentials()
+            cls._parameter_store = ParameterStore()
+            # cls._database_config = DatabaseConfig()
+        return cls._instance
+    
     # 서비스별 client 생성
     def create_client(self, service_name: str):
         return boto3.client(
@@ -29,17 +36,12 @@ class AWSService:
             "bucket": os.getenv('SPACE_S3_BUCKET_NAME')
         }
     
-    # SSM
-    # def get_ssm_client(self):
-    #     return self.create_client('ssm')
-
-    # DB
-    def get_db_config(self) -> Dict:
-        return self._database_config.get_db_config()
-    
     # JWT
     def get_jwt_secret(self) -> str:
-        return self._parameter_store.get_parameter("USER_JWT_SECRET")
+        if self._env_config.is_development:
+            return os.getenv('USER_JWT_SECRET')
+        else:
+            return self._parameter_store.get_parameter("USER_JWT_SECRET")
     
 def get_aws_service() -> AWSService:
     return AWSService()

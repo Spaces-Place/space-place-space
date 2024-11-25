@@ -1,6 +1,5 @@
 FROM python:3.12.3-alpine3.20
 
-
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt

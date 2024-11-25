@@ -1,69 +1,75 @@
-from typing import Dict, Optional
+from typing import Optional
+from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
-from services.aws_service import AWSService, get_aws_service
+from utils.database_config import DatabaseConfig
 
 
-class MongoDBClient:
-    def __init__(self, aws_service: AWSService):
-        self.aws_service = aws_service
-        self._client: Optional[AsyncIOMotorClient] = None
-        self._database: Optional[AsyncIOMotorDatabase] = None
-        self._connect()
+class MongoDB:
+    _instance: Optional['MongoDB'] = None
+    
+    def __init__(self):
+        self._db_config = DatabaseConfig().get_db_config()
+        self.client: Optional[AsyncIOMotorClient] = None
+        self.db: Optional[AsyncIOMotorDatabase] = None
 
-    def _connect(self):
-        db_config = self.aws_service.get_db_config()
-        
-        # 연결 문자열 생성 (인증 포함)
-        connection_string = self._build_connection_string(db_config)
-        
+    async def connect(self):
+        if not self.client:
+            try:
+                self.client = AsyncIOMotorClient(self._build_connection_string())
+                self.db = self.client[self._db_config.dbname]
+                
+                await self.client.admin.command('ismaster')
+            except Exception as e:
+                print(f"MongoDB 연결 실패: {str(e)}")  # TODO: logger로 변경
+                await self.close()
+                raise HTTPException(status_code=500, detail="데이터베이스 연결 실패")
+
+    def _build_connection_string(self) -> str:
+        host = self._db_config.host
+        dbname = self._db_config.dbname
+        username = self._db_config.username
+        password = self._db_config.password
+        return f"mongodb://{username}:{password}@{host}:27017/{dbname}"
+
+    async def initialize(self):
         try:
-            self._client = AsyncIOMotorClient(connection_string)
-            self._database = self._client[db_config['dbname']]
+            # 인덱스 생성(위치 기반 데이터 조회 시 필요)
+            existing_indexes = await self.db.spaces.list_indexes().to_list(None)
+            index_exists = False
+            
+            for index in existing_indexes:
+                if "location_2dsphere" in index["name"]:
+                    index_exists = True
+                    break
+            
+            # 인덱스가 없을 때만 생성
+            if not index_exists:
+                await self.db.spaces.create_index([("location", "2dsphere")])            
+
+            return self.db
+        
         except Exception as e:
-            raise RuntimeError(f"MongoDB 연결 실패: {e}")
-        
-    def _build_connection_string(self, db_config: Dict[str, str]) -> str:
-        # 개발 환경이나 비밀번호가 없는 경우 기본 호스트 사용
-        if not db_config.get('password'):
-            return db_config['host']
-        
-        # 인증 포함 연결 문자열 생성
-        host = db_config['host']
-        dbname = db_config['dbname']
-        username = db_config['username']
-        password = db_config['password']
-        
-    # 다양한 연결 문자열 형식 지원  
-        if username and password:
-            return f"mongodb://{username}:{password}@{host}:27017/{dbname}"
-        return host
+            print(f"DB 초기화 중 오류가 발생했습니다.: {e}")  # TODO: logger로 바꿔야함
+            raise HTTPException(status_code=500, detail="내부적으로 오류가 발생했습니다.")
+    
+    async def close(self):
+        if self.client:
+            self.client.close()
+            self.client = None
+            self.db = None
 
-    @property
-    def client(self) -> AsyncIOMotorClient:
-        if not self._client:
-            raise RuntimeError("MongoDB 클라이언트가 초기화되지 않았습니다.")
-        return self._client
+    @classmethod
+    async def get_instance(cls) -> 'MongoDB':
+        if not cls._instance:
+            cls._instance = MongoDB()
+            await cls._instance.connect()
+        return cls._instance
 
-    @property
-    def database(self) -> AsyncIOMotorDatabase:
-        if self._database is None:
-            raise RuntimeError("MongoDB 데이터베이스가 초기화되지 않았습니다.")
-        return self._database
 
-    def get_collection(self, collection_name: str):
-        return self.database[collection_name]
-
-    def close(self):
-        if self._client:
-            self._client.close()
-
-# 편의를 위한 팩토리 함수
-def get_mongodb_client() -> MongoDBClient:
-    aws_service = get_aws_service()
-    return MongoDBClient(aws_service)
-
-# 비동기 데이터베이스 가져오기 함수
-async def get_database() -> AsyncIOMotorDatabase:
-    mongodb_client = get_mongodb_client()
-    return mongodb_client.database
+async def get_mongodb() -> AsyncIOMotorDatabase:
+    mongodb = await MongoDB.get_instance()
+    if mongodb.db is None:
+        print("데이터베이스가 초기화되지 않았습니다.")  # TODO: logger로 변경
+        raise HTTPException(status_code=500, detail="내부적으로 오류가 발생했습니다.")
+    return mongodb.db
