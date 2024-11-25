@@ -5,44 +5,29 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pymongo.errors import OperationFailure
 
 from routers.space import space_router
-from utils.mongodb import get_database
+from utils import mongodb
+from utils.mongodb import MongoDB, get_mongodb
 
-
-app = FastAPI(title="공간 API", version="ver.1")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global mongodb
     env_type = '.env.development' if os.getenv('APP_ENV') == 'development' else '.env.production'
     load_dotenv(env_type)
 
-    db = await get_database()
-    
+    mongodb = await MongoDB.get_instance()
+
     try:
-        existing_indexes = await db.spaces.list_indexes().to_list(None)
-        index_exists = False
-        
-        for index in existing_indexes:
-            if "location_2dsphere" in index["name"]:
-                index_exists = True
-                break
-        
-        # 인덱스가 없을 때만 생성
-        if not index_exists:
-            await db.spaces.create_index([("location", "2dsphere")])
-            
-    except OperationFailure as e:
-        pass
-        # print(f"인덱스 생성 오류 : {e}")
-    
-    yield
+        await mongodb.initialize()
+        print("데이터베이스가 성공적으로 초기화되었습니다.")
+        yield
+    finally:
+        await mongodb.close()
+        MongoDB._instance = None
 
-    await db.client.close()
-
-# FastAPI 앱 인스턴스 생성
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
 
 app.include_router(space_router, prefix="/api/v1/spaces")
 

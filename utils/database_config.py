@@ -1,30 +1,33 @@
 import os
-from typing import Dict
+from utils.aws_ssm import ParameterStore
+from utils.env_config import EnvConfig
+from utils.type.db_config_type import DBConfig
 
 
 class DatabaseConfig:
-    def __init__(self, env_type: str):
-        self.env_type = env_type
+    
+    _instance = None
 
-    def get_db_config(self) -> Dict[str, str]:
-        if self.env_type == 'development':
-            return {
-                'host': os.getenv('SPACE_DB_HOST'),
-                'dbname': os.getenv('SPACE_DB_NAME'),
-                'username': os.getenv('SPACE_DB_USERNAME'),
-                'password': os.getenv('SPACE_DB_PASSWORD')
-            }
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(DatabaseConfig, cls).__new__(cls)
+            cls._env_config = EnvConfig()
+            cls._parameter_store = ParameterStore()
+        return cls._instance
+    
+    def get_db_config(self) -> DBConfig:
+
+        if self._env_config.is_development:
+            return DBConfig(
+                host=os.getenv('SPACE_DB_HOST'),
+                dbname=os.getenv('SPACE_DB_NAME'),
+                username=os.getenv('SPACE_DB_USERNAME'),
+                password=os.getenv('SPACE_DB_PASSWORD')
+            )
         else:
-            from utils.aws_ssm import ParameterStore
-            from utils.credential import Credential
-
-            credentials = Credential.get_credentials()
-            parameter_store = ParameterStore(credentials)
-
-            return {
-                'host': parameter_store.get_parameter("SPACE_DB_HOST"),
-                'dbname': parameter_store.get_parameter("SPACE_DB_NAME"),
-                'username': parameter_store.get_parameter("SPACE_DB_USERNAME"),
-                'password': parameter_store.get_parameter("SPACE_DB_PASSWORD")
-            }
-        
+            return DBConfig(
+                host=self._parameter_store.get_parameter("SPACE_DB_HOST"),
+                dbname=self._parameter_store.get_parameter("SPACE_DB_NAME"),
+                username=self._parameter_store.get_parameter("SPACE_DB_USERNAME"),
+                password=self._parameter_store.get_parameter("SPACE_DB_PASSWORD", True)
+            )

@@ -7,12 +7,12 @@ from enums.space_type import SpaceType
 from schemas.space_request import SpaceRequest, SpaceUpdateRequest
 from schemas.space_response import SpaceResponse
 from services.aws_service import AWSService, get_aws_service
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from utils.mongodb import get_database
+from utils.mongodb import get_mongodb
 
 
-async def get_space_service(db: AsyncIOMotorClient = Depends(get_database), aws_service: AWSService = Depends(get_aws_service)):
+async def get_space_service(db: AsyncIOMotorDatabase = Depends(get_mongodb), aws_service: AWSService = Depends(get_aws_service)):
     return SpaceService(db, aws_service)
 
 class SpaceService:
@@ -20,7 +20,7 @@ class SpaceService:
     # 이미지 확장자 목록
     _ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp'}
 
-    def __init__(self, db: AsyncIOMotorClient, aws_service:AWSService):
+    def __init__(self, db: AsyncIOMotorDatabase, aws_service:AWSService):
         self.db = db
         aws_service = get_aws_service()
         self.s3 = aws_service.get_s3_config()
