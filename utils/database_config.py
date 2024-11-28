@@ -29,5 +29,6 @@ class DatabaseConfig:
                 host=self._parameter_store.get_parameter("SPACE_DB_HOST"),
                 dbname=self._parameter_store.get_parameter("SPACE_DB_NAME"),
                 username=self._parameter_store.get_parameter("SPACE_DB_USERNAME"),
-                password=self._parameter_store.get_parameter("SPACE_DB_PASSWORD", True)
+                password=self._parameter_store.get_parameter("SPACE_DB_PASSWORD", True),
+                options=self._parameter_store.get_parameter("SPACE_DB_OPTIONS")
             )
