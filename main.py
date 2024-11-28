@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +29,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
 
+health_router = APIRouter()
 app.include_router(space_router, prefix="/api/v1/spaces")
+app.include_router(health_router)
+
+@health_router.get("/health", status_code=status.HTTP_200_OK)
+async def health_check() -> dict:
+    return {"status" : "ok"}
+
+@app.get("/", status_code=status.HTTP_200_OK)
+async def root_check() -> dict:
+    return {"message": "Welcome to the API!"}
+
+
 
 app.add_middleware(
     CORSMiddleware,
