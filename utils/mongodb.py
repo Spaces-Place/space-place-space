@@ -10,16 +10,25 @@ class MongoDB:
     
     def __init__(self):
         self._db_config = DatabaseConfig().get_db_config()
+        print(f"DB Config: host={self._db_config.host}, "
+          f"dbname={self._db_config.dbname}, "
+          f"username={self._db_config.username}")  # 디버깅용
         self.client: Optional[AsyncIOMotorClient] = None
         self.db: Optional[AsyncIOMotorDatabase] = None
 
     async def connect(self):
         if not self.client:
             try:
+                connection_string = self._build_connection_string()
+                print(f"Connection Strin:{connection_string}")
+
+
                 self.client = AsyncIOMotorClient(self._build_connection_string())
                 self.db = self.client[self._db_config.dbname]
                 
+                print("Attempting to connect to MongoDB...")
                 await self.client.admin.command('ismaster')
+                print("MongoDB 연결성공")
             except Exception as e:
                 print(f"MongoDB 연결 실패: {str(e)}")  # TODO: logger로 변경
                 await self.close()
