@@ -39,7 +39,8 @@ class MongoDB:
         dbname = self._db_config.dbname
         username = self._db_config.username
         password = self._db_config.password
-        return f"mongodb://{username}:{password}@{host}/{dbname}"
+        options = self._db_config.options or ""
+        return f"mongodb://{username}:{password}@{host}/{dbname}{options}"
 
     async def initialize(self):
         try:
