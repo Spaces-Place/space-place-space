@@ -1,7 +1,10 @@
+from datetime import datetime
 from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from pydantic import Field
 from enums.space_type import SpaceType
 from schemas.common import BaseResponse
+from schemas.payment import PaymentRequest
 from schemas.space_request import SpaceRequest, SpaceUpdateRequest, get_space_form, get_space_update_form
 from schemas.space_response import SpaceCreateResponse, SpaceListResponse, SpaceResponse
 from services.space_service import SpaceService, get_space_service
@@ -100,3 +103,35 @@ async def delete_space(
 ):
     await space_service.delete_space(space_id, token_info["user_id"])
     return BaseResponse(message="공간이 삭제되었습니다.")
+
+# 예약 전 공간 이름과 총액을 받아오는 end-point
+@space_router.post("/pre-order", response_model=Dict, status_code=status.HTTP_200_OK, summary="")
+async def pre_order_data(
+    payment_request: PaymentRequest,
+    token_info=Depends(userAuthenticate),
+    space_service: SpaceService = Depends(get_space_service)
+):
+    """구현이 필요하지 않습니다."""
+    result_data = await space_service.get_space(payment_request.space_id)
+
+    if payment_request.start_time and payment_request.end_time:
+        total_hours = calculate_time_difference(payment_request.start_time, payment_request.end_time)
+        total_amount = result_data.get("unit_price") * total_hours
+    else:
+        total_hours = 1
+        total_amount = result_data.get("unit_price")
+
+    space_data = {
+        "space_name": result_data.get("space_name"),
+        "total_amount": total_amount,
+        "quantity": total_hours
+    }
+    return space_data
+
+def calculate_time_difference(start_time: datetime, end_time: datetime) -> dict:
+    # 시간 차이 계산
+    date_format = "%Y-%m-%d %H:%M:%S"
+    start_time = datetime.strptime(start_time, date_format)
+    end_time = datetime.strptime(end_time, date_format)
+    time_difference = end_time - start_time
+    return time_difference.total_seconds() / 3600
