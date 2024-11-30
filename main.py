@@ -5,6 +5,8 @@ from fastapi import FastAPI, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from routers.space import space_router
 from utils import mongodb
@@ -29,19 +31,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
 
-health_router = APIRouter()
 app.include_router(space_router, prefix="/api/v1/spaces")
-app.include_router(health_router)
 
-@health_router.get("/health", status_code=status.HTTP_200_OK)
+@app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check() -> dict:
     return {"status" : "ok"}
 
-@app.get("/", status_code=status.HTTP_200_OK)
-async def root_check() -> dict:
-    return {"message": "Welcome to the API!"}
+FastAPIInstrumentor.instrument_app(app)
 
-
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
