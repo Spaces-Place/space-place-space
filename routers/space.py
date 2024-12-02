@@ -29,7 +29,7 @@ async def get_nearby_spaces(
 
 
 # 공간 등록
-@space_router.post("/", response_model=SpaceCreateResponse, status_code=status.HTTP_201_CREATED, summary="공간 등록")
+@space_router.post("", response_model=SpaceCreateResponse, status_code=status.HTTP_201_CREATED, summary="공간 등록")
 async def create_space(
     space_data: SpaceRequest = Depends(get_space_form),
     token_info: Dict = Depends(userAuthenticate),
@@ -52,7 +52,7 @@ async def create_space(
 
 
 # 공간 목록 조회
-@space_router.get("/", response_model=List[SpaceListResponse], status_code=status.HTTP_200_OK, summary="공간 목록 조회")
+@space_router.get("", response_model=List[SpaceListResponse], status_code=status.HTTP_200_OK, summary="공간 목록 조회")
 async def get_spaces(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
