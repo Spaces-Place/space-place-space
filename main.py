@@ -45,7 +45,7 @@ instrumentator.instrument(app).expose(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], # TODO: 허용하는 URL 넣어야함
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
