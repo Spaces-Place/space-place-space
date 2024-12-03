@@ -39,3 +39,4 @@ class SpaceResponse(BaseResponse):
     operating_hour: List[OperatingHour] = Field(description="운영 시간")
     is_operate: bool = Field(default=True, description="운영 여부")
     created_at: datetime = Field(default_factory=datetime.now, description="생성일")
+    images: List[str] = Field(description="공간 이미지 목록")
