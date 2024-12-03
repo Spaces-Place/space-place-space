@@ -80,6 +80,8 @@ class SpaceService:
     ) -> List[Dict]:
         query = {"is_operate" : True}
 
+        bucket_name = self.s3["bucket"]
+
         if space_type:
             query["space_type"] = space_type
 
@@ -91,7 +93,7 @@ class SpaceService:
 
         for space in spaces:
             space['space_id'] = str(space['_id'])
-            bucket_name = self.s3["bucket"]
+            
             space['thumbnail'] = f"https://{bucket_name}.s3.{os.getenv('REGION_NAME')}.amazonaws.com/{space['user_id']}/{space['space_id']}/{space['images'][0]['filename']}"
             del space['_id']
 
@@ -100,12 +102,17 @@ class SpaceService:
 
     # 특정 공간 조회
     async def get_space(self, space_id: str) -> SpaceResponse:
+        bucket_name = self.s3["bucket"]
         space = await self.db.spaces.find_one({"_id": ObjectId(space_id), "is_operate": True})
         if not space:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="공간을 찾을 수 없습니다.")
-        
+                    
         space['space_id'] = str(space['_id'])
+        images = []
+        for image in space['images']:
+            images.append(f"https://{bucket_name}.s3.{os.getenv('REGION_NAME')}.amazonaws.com/{space['user_id']}/{space['space_id']}/{image['filename']}")
         del space['_id']
+        space['images'] = images
 
         return space
 
