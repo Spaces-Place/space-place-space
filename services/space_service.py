@@ -58,7 +58,7 @@ class SpaceService:
                     "original_filename": image.filename
                 })
 
-            # 이후에 클라이언트에게 이렇게 내려주기 f"https://{bucket_name}.s3.amazonaws.com/{s3_path}"
+                s3_client.put_object_acl(Bucket=bucket_name, Key=path, ACL='public-read')
 
             # 이미지 데이터 업데이트
             await self.db.spaces.update_one({"_id": space_id}, {"$set": {"images": image_urls}})
@@ -91,6 +91,8 @@ class SpaceService:
 
         for space in spaces:
             space['space_id'] = str(space['_id'])
+            bucket_name = self.s3["bucket"]
+            space['thumbnail'] = f"https://{bucket_name}.s3.{os.getenv('REGION_NAME')}.amazonaws.com/{space['user_id']}/{space['space_id']}/{space['images'][0]['filename']}"
             del space['_id']
 
         return spaces

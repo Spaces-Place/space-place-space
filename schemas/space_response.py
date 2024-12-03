@@ -21,6 +21,7 @@ class SpaceListResponse(BaseModel):
     unit_price: int = Field(description="이용 단위별 가격")
     amenities: List[str] = Field(description="편의 시설")
     location: Location
+    thumbnail: str = Field(description="썸네일 이미지")
 
 class SpaceResponse(BaseResponse):
     space_id: str = Field(description="공간 고유번호")
