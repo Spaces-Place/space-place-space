@@ -11,9 +11,7 @@ from services.space_service import SpaceService, get_space_service
 from utils.authenticate import userAuthenticate
 
 
-space_router = APIRouter(
-    tags=["공간"]
-)
+space_router = APIRouter(tags=["공간"])
 
 
 # 위치 기준 데이터
@@ -128,7 +126,7 @@ async def pre_order_data(
     }
     return space_data
 
-def calculate_time_difference(start_time: str, end_time: str) -> dict:
+def calculate_time_difference(start_time: str, end_time: str):
     # 시간 차이 계산
     date_format = "%Y-%m-%d %H:%M:%S"
     start_time = datetime.strptime(start_time, date_format)

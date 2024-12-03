@@ -13,6 +13,9 @@ from utils import mongodb
 from utils.mongodb import MongoDB, get_mongodb
 
 
+logging.config.fileConfig('log.conf', encoding="utf-8")
+logger = logging.getLogger()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global mongodb
@@ -35,6 +38,7 @@ app.include_router(space_router, prefix="/api/v1/spaces")
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check() -> dict:
+    logger.info('health check')
     return {"status" : "ok"}
 
 FastAPIInstrumentor.instrument_app(app)
