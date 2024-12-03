@@ -114,7 +114,7 @@ async def pre_order_data(
     """구현이 필요하지 않습니다."""
     result_data = await space_service.get_space(payment_request.space_id)
 
-    if payment_request.start_time and payment_request.end_time:
+    if result_data['usage_unit'] == "TIME":
         total_hours = calculate_time_difference(payment_request.start_time, payment_request.end_time)
         total_amount = result_data.get("unit_price") * total_hours
     else:
@@ -128,7 +128,7 @@ async def pre_order_data(
     }
     return space_data
 
-def calculate_time_difference(start_time: datetime, end_time: datetime) -> dict:
+def calculate_time_difference(start_time: str, end_time: str) -> dict:
     # 시간 차이 계산
     date_format = "%Y-%m-%d %H:%M:%S"
     start_time = datetime.strptime(start_time, date_format)
