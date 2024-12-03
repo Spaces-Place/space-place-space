@@ -123,8 +123,8 @@ async def pre_order_data(
 
     space_data = {
         "space_name": result_data.get("space_name"),
-        "total_amount": total_amount,
-        "quantity": total_hours
+        "total_amount": int(total_amount),
+        "quantity": int(total_hours)
     }
     return space_data
 
