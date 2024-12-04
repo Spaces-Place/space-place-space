@@ -22,7 +22,6 @@ class MongoDB:
         if not self.client:
             try:
                 connection_string = self._build_connection_string()
-                self._logger.info(f"Connection String:{connection_string}")
 
                 self.client = AsyncIOMotorClient(self._build_connection_string())
                 self.db = self.client[self._db_config.dbname]
@@ -30,10 +29,9 @@ class MongoDB:
                 self._logger.info('몽고DB 연결 중...')
                 await self.client.admin.command('ismaster')
                 self._logger.info('몽고DB 연결 성공')
-                self._logger.info(self._db_config)
             except Exception as e:
-                self._logger.error(f"MongoDB 연결 실패: {str(e)}")
                 await self.close()
+                self._logger.error(f"MongoDB 연결 실패: {str(e)}")
                 raise HTTPException(status_code=500, detail="데이터베이스 연결 실패")
 
     def _build_connection_string(self) -> str:
