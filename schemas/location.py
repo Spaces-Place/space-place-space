@@ -1,6 +1,7 @@
 from typing import List
 from pydantic import BaseModel, Field
 
+
 class Location(BaseModel):
     sido: str = Field(description="시, 도 (서울특별시)")
     address: str = Field(description="상세 주소")
