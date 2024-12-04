@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import Field
 from enums.space_type import SpaceType
+from routers.logging_router import LoggingAPIRoute
 from schemas.common import BaseResponse
 from schemas.payment import PaymentRequest
 from schemas.space_request import SpaceRequest, SpaceUpdateRequest, get_space_form, get_space_update_form
@@ -11,7 +12,7 @@ from services.space_service import SpaceService, get_space_service
 from utils.authenticate import userAuthenticate
 
 
-space_router = APIRouter(tags=["공간"])
+space_router = APIRouter(tags=["공간"], route_class=LoggingAPIRoute)
 
 
 # 위치 기준 데이터
