@@ -15,7 +15,7 @@ from utils import mongodb
 from utils.mongodb import MongoDB, get_mongodb
 
 log_dir = Path("/var/log/spaceplace/space")
-log_dir.mkdir(exist_ok=True)
+log_dir.mkdir(parents=True, exist_ok=True)
 
 logging.config.fileConfig('log.conf', encoding="utf-8")
 logger = logging.getLogger()
