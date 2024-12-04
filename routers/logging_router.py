@@ -24,9 +24,9 @@ class LoggingAPIRoute(APIRoute):
     @staticmethod
     def _has_json_body(request: Request) -> bool:
         if (
-            request.method in ("POST", "PUT", "PATCH") and 
-            request.headers.get("content-type") == "application/json"
-				):
+            request.method in ("POST", "PUT", "PATCH")
+            and request.headers.get("content-type") == "application/json"
+        ):
             return True
         return False
 
@@ -51,7 +51,7 @@ class LoggingAPIRoute(APIRoute):
         extra: Dict[str, str] = {
             "httpMethod": request.method,
             "url": request.url.path,
-            "body": response.body.decode("UTF-8")
+            "body": response.body.decode("UTF-8"),
         }
-		
+
         logger.info(f"응답 데이터: {extra['body']}", extra=extra)

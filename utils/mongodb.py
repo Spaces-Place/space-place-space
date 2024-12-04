@@ -7,14 +7,16 @@ from utils.database_config import DatabaseConfig
 
 
 class MongoDB:
-    _instance: Optional['MongoDB'] = None
+    _instance: Optional["MongoDB"] = None
     _logger = logging.getLogger("")
-    
+
     def __init__(self):
         self._db_config = DatabaseConfig().get_db_config()
-        print(f"DB Config: host={self._db_config.host}, "
-          f"dbname={self._db_config.dbname}, "
-          f"username={self._db_config.username}")  # 디버깅용
+        print(
+            f"DB Config: host={self._db_config.host}, "
+            f"dbname={self._db_config.dbname}, "
+            f"username={self._db_config.username}"
+        )  # 디버깅용
         self.client: Optional[AsyncIOMotorClient] = None
         self.db: Optional[AsyncIOMotorDatabase] = None
 
@@ -25,10 +27,10 @@ class MongoDB:
 
                 self.client = AsyncIOMotorClient(self._build_connection_string())
                 self.db = self.client[self._db_config.dbname]
-                
-                self._logger.info('몽고DB 연결 중...')
-                await self.client.admin.command('ismaster')
-                self._logger.info('몽고DB 연결 성공')
+
+                self._logger.info("몽고DB 연결 중...")
+                await self.client.admin.command("ismaster")
+                self._logger.info("몽고DB 연결 성공")
             except Exception as e:
                 await self.close()
                 self._logger.error(f"MongoDB 연결 실패: {str(e)}")
@@ -47,23 +49,25 @@ class MongoDB:
             # 인덱스 생성(위치 기반 데이터 조회 시 필요)
             existing_indexes = await self.db.spaces.list_indexes().to_list(None)
             index_exists = False
-            
+
             for index in existing_indexes:
                 if "location_2dsphere" in index["name"]:
                     index_exists = True
                     break
-            
+
             # 인덱스가 없을 때만 생성
             if not index_exists:
                 self._logger.info(f"location, 2dsphere 인덱스 생성")
-                await self.db.spaces.create_index([("location", "2dsphere")])            
+                await self.db.spaces.create_index([("location", "2dsphere")])
 
             return self.db
-        
+
         except Exception as e:
             self._logger.error(f"DB 초기화 중 오류가 발생했습니다.: {e}")
-            raise HTTPException(status_code=500, detail="내부적으로 오류가 발생했습니다.")
-    
+            raise HTTPException(
+                status_code=500, detail="내부적으로 오류가 발생했습니다."
+            )
+
     async def close(self):
         if self.client:
             self.client.close()
@@ -71,7 +75,7 @@ class MongoDB:
             self.db = None
 
     @classmethod
-    async def get_instance(cls) -> 'MongoDB':
+    async def get_instance(cls) -> "MongoDB":
         if not cls._instance:
             cls._instance = MongoDB()
             await cls._instance.connect()
