@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 import logging
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, APIRouter, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,8 @@ from routers.space import space_router
 from utils import mongodb
 from utils.mongodb import MongoDB, get_mongodb
 
+log_dir = Path("/var/log/spaceplace/space")
+log_dir.mkdir(exist_ok=True)
 
 logging.config.fileConfig('log.conf', encoding="utf-8")
 logger = logging.getLogger()
