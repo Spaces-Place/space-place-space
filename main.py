@@ -30,7 +30,6 @@ async def lifespan(app: FastAPI):
 
     try:
         await mongodb.initialize()
-        print("데이터베이스가 성공적으로 초기화되었습니다.")
         yield
     finally:
         await mongodb.close()
