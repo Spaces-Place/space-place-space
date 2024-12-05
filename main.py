@@ -1,9 +1,7 @@
 from contextlib import asynccontextmanager
-import logging
 import os
-from pathlib import Path
 from dotenv import load_dotenv
-from fastapi import FastAPI, APIRouter, status
+from fastapi import Depends, FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,13 +10,9 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from routers.space import space_router
 from utils import mongodb
-from utils.mongodb import MongoDB, get_mongodb
+from utils.logger import Logger
+from utils.mongodb import MongoDB
 
-log_dir = Path("/var/log/spaceplace/space")
-log_dir.mkdir(parents=True, exist_ok=True)
-
-logging.config.fileConfig('log.conf', encoding="utf-8")
-logger = logging.getLogger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,7 +34,7 @@ app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
 app.include_router(space_router, prefix="/api/v1/spaces")
 
 @app.get("/health", status_code=status.HTTP_200_OK)
-async def health_check() -> dict:
+async def health_check(logger: Logger = Depends(Logger.setup_logger)) -> dict:
     logger.info('health check')
     return {"status" : "ok"}
 
