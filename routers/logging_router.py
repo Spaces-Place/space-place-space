@@ -39,13 +39,11 @@ class LoggingAPIRoute(APIRoute):
             "queryParams": request.query_params,
         }
 
-        print(request.headers.get("content-type"))
-
         if self._has_json_body(request):
             request_body = await request.body()
             extra["body"] = request_body.decode("UTF-8")
             
-        elif request.headers.get("content-type").startswith("multipart/form-data"):
+        elif request.headers.get("content-type") and request.headers.get("content-type").startswith("multipart/form-data"):
             form = await request.form()
             extra["body"] = {key: "파일" if isinstance(value, UploadFile) else value for key, value in form.items()}
 
