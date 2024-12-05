@@ -25,9 +25,9 @@ class LoggingAPIRoute(APIRoute):
     @staticmethod
     def _has_json_body(request: Request) -> bool:
         if (
-            request.method in ("POST", "PUT", "PATCH") and 
-            request.headers.get("content-type") == "application/json"
-				):
+            request.method in ("POST", "PUT", "PATCH")
+            and request.headers.get("content-type") == "application/json"
+        ):
             return True
         return False
 
@@ -42,11 +42,15 @@ class LoggingAPIRoute(APIRoute):
         if self._has_json_body(request):
             request_body = await request.body()
             extra["body"] = request_body.decode("UTF-8")
-            
-        elif request.headers.get("content-type") and request.headers.get("content-type").startswith("multipart/form-data"):
-            form = await request.form()
-            extra["body"] = {key: "파일" if isinstance(value, UploadFile) else value for key, value in form.items()}
 
+        elif request.headers.get("content-type") and request.headers.get(
+            "content-type"
+        ).startswith("multipart/form-data"):
+            form = await request.form()
+            extra["body"] = {
+                key: "파일" if isinstance(value, UploadFile) else value
+                for key, value in form.items()
+            }
 
         logger.info(f"요청 URL: {extra['httpMethod']} {extra['url']}", extra=extra)
         logger.info(f"쿼리 파라미터: {extra['queryParams']}", extra=extra)
@@ -57,7 +61,7 @@ class LoggingAPIRoute(APIRoute):
         extra: Dict[str, str] = {
             "httpMethod": request.method,
             "url": request.url.path,
-            "body": response.body.decode("UTF-8")
+            "body": response.body.decode("UTF-8"),
         }
-		
+
         logger.info(f"응답 데이터: {extra['body']}", extra=extra)
