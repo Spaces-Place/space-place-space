@@ -1,28 +1,23 @@
-import logging
 from typing import Optional
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from utils.database_config import DatabaseConfig
+from utils.logger import Logger
 
 
 class MongoDB:
     _instance: Optional['MongoDB'] = None
-    _logger = logging.getLogger("")
     
     def __init__(self):
         self._db_config = DatabaseConfig().get_db_config()
-        print(f"DB Config: host={self._db_config.host}, "
-          f"dbname={self._db_config.dbname}, "
-          f"username={self._db_config.username}")  # 디버깅용
         self.client: Optional[AsyncIOMotorClient] = None
         self.db: Optional[AsyncIOMotorDatabase] = None
+        self._logger = Logger.setup_logger()
 
     async def connect(self):
         if not self.client:
             try:
-                connection_string = self._build_connection_string()
-
                 self.client = AsyncIOMotorClient(self._build_connection_string())
                 self.db = self.client[self._db_config.dbname]
                 

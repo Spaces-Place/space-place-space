@@ -1,6 +1,7 @@
 import os
 from utils.aws_ssm import ParameterStore
 from utils.env_config import EnvConfig
+from utils.logger import Logger
 from utils.type.db_config_type import DBConfig
 
 
@@ -13,6 +14,7 @@ class DatabaseConfig:
             cls._instance = super(DatabaseConfig, cls).__new__(cls)
             cls._env_config = EnvConfig()
             cls._parameter_store = ParameterStore()
+            cls._logger = Logger.setup_logger()
         return cls._instance
     
     def get_db_config(self) -> DBConfig:
