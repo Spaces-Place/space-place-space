@@ -13,6 +13,7 @@ from schemas.space_request import SpaceRequest
 class SpaceCreateResponse(BaseResponse):
     space_id: str = Field(description="공간 고유번호")
 
+
 class SpaceListResponse(BaseModel):
     space_id: str = Field(description="공간 고유번호")
     space_name: str = Field(description="공간 이름 (업체명)")
@@ -22,6 +23,7 @@ class SpaceListResponse(BaseModel):
     amenities: List[str] = Field(description="편의 시설")
     location: Location
     thumbnail: str = Field(description="썸네일 이미지")
+
 
 class SpaceResponse(BaseResponse):
     space_id: str = Field(description="공간 고유번호")
