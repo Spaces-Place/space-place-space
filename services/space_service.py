@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Dict, List, Optional
 from bson import ObjectId
@@ -19,6 +20,7 @@ class SpaceService:
     
     # 이미지 확장자 목록
     _ALLOWED_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif', '.bmp'}
+    _logger = logging.getLogger()
 
     def __init__(self, db: AsyncIOMotorDatabase, aws_service:AWSService):
         self.db = db
@@ -47,6 +49,7 @@ class SpaceService:
             image_urls = []
             for idx, image in enumerate(space.images):
                 if not self._allowed_file(image.filename):
+                    self._logger.error(f"{image.filename}은 지원하지 않는 이미지 형식입니다.")
                     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{image.filename}은 지원하지 않는 이미지 형식입니다.")
                 
                 file_extension = os.path.splitext(image.filename)[1]
@@ -58,13 +61,15 @@ class SpaceService:
                     "original_filename": image.filename
                 })
 
-            # 이후에 클라이언트에게 이렇게 내려주기 f"https://{bucket_name}.s3.amazonaws.com/{s3_path}"
+                s3_client.put_object_acl(Bucket=bucket_name, Key=path, ACL='public-read')
 
             # 이미지 데이터 업데이트
             await self.db.spaces.update_one({"_id": space_id}, {"$set": {"images": image_urls}})
+            self._logger.info(f"이미지 업로드 성공")
 
         except Exception as e:
             await self.db.spaces.delete_one({"_id": space_id})
+            self._logger.error(f"이미지 업로드 중 오류가 발생했습니다.{space_id}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"이미지 업로드 중 오류가 발생했습니다.{e}")
         
         return space_id
@@ -80,17 +85,20 @@ class SpaceService:
     ) -> List[Dict]:
         query = {"is_operate" : True}
 
+        bucket_name = self.s3["bucket"]
+
         if space_type:
             query["space_type"] = space_type
 
         if sido:
             query["location.sido"] = sido
 
-        result_cursor = self.db.spaces.find(query).skip(skip).limit(limit)
+        result_cursor = self.db.spaces.find(query).sort({ "created_at": -1 }).skip(skip).limit(limit)
         spaces = await result_cursor.to_list()
 
         for space in spaces:
             space['space_id'] = str(space['_id'])
+            space['thumbnail'] = f"https://{bucket_name}.s3.{os.getenv('REGION_NAME')}.amazonaws.com/{space['user_id']}/{space['space_id']}/{space['images'][0]['filename']}"
             del space['_id']
 
         return spaces
@@ -98,12 +106,18 @@ class SpaceService:
 
     # 특정 공간 조회
     async def get_space(self, space_id: str) -> SpaceResponse:
+        bucket_name = self.s3["bucket"]
         space = await self.db.spaces.find_one({"_id": ObjectId(space_id), "is_operate": True})
         if not space:
+            self._logger.error(f"공간을 찾을 수 없습니다.{space_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="공간을 찾을 수 없습니다.")
-        
+                    
         space['space_id'] = str(space['_id'])
+        images = []
+        for image in space['images']:
+            images.append(f"https://{bucket_name}.s3.{os.getenv('REGION_NAME')}.amazonaws.com/{space['user_id']}/{space['space_id']}/{image['filename']}")
         del space['_id']
+        space['images'] = images
 
         return space
 
@@ -113,8 +127,10 @@ class SpaceService:
         existing_space = await self.db.spaces.find_one({"_id": ObjectId(space_id)})
 
         if not existing_space:
+            self._logger.error(f"공간을 찾을 수 없습니다.{space_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="공간을 찾을 수 없습니다.")
         if user_id != existing_space["user_id"]:
+            self._logger.error(f"본인 공간만 수정 가능합니다.{user_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="본인 공간만 수정 가능합니다.")
     
         # 기존 이미지 삭제
@@ -125,15 +141,19 @@ class SpaceService:
         for image_path in existing_image_paths:
             s3_client.delete_object(Bucket=bucket_name, Key=image_path)
             
+        self._logger.error(f"기존 이미지 삭제 완료")
+
         try:
             # 받아온 이미지 업로드
             image_urls = []
             if not space.images:
+                self._logger.error(f"이미지를 등록해야 합니다.{user_id}")
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미지를 등록해야 합니다.")
             
             # 1차적으로 지원하는 이미지 형식인지 확인하고 업로드
             for image in space.images:
                 if not self._allowed_file(image.filename):
+                    self._logger.error(f"{image.filename}은 지원하지 않는 이미지 형식입니다.")
                     raise HTTPException(status_code=400, detail=f"{image.filename}은 지원하지 않는 이미지 형식입니다.")
                 
             for idx, image in enumerate(space.images):
@@ -146,6 +166,7 @@ class SpaceService:
                     "original_filename": image.filename
                 })
 
+            self._logger.info(f"수정된 이미지 업로드 완료")
 
             update_data = space.model_dump(exclude_unset=True)
             if image_urls:
@@ -154,6 +175,7 @@ class SpaceService:
 
         except Exception as e:
             await self.db.spaces.delete_one({"_id": space_id})
+            self._logger.error(f"이미지 업로드 중 오류가 발생했습니다.{space_id}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"이미지 업로드 중 오류가 발생했습니다.{e}")
         
 
@@ -162,9 +184,11 @@ class SpaceService:
         existing_space = await self.db.spaces.find_one({"_id": ObjectId(space_id)})
 
         if not existing_space:
+            self._logger.error(f"유효하지 않은 공간입니다.{space_id}")
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="공간을 찾을 수 없습니다.")
         
         if existing_space['user_id'] != user_id:
+            self._logger.error(f"본인 공간만 삭제할 수 있습니다.{user_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="본인 공간만 삭제할 수 있습니다.")
         
         # 이미지 삭제
@@ -177,8 +201,9 @@ class SpaceService:
         if 'Contents' in response:
             for obj in response['Contents']:
                 s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
-            
+
         await self.db.spaces.delete_one({"_id": ObjectId(space_id)})
+        self._logger.info(f"이미지 및 공간 삭제 완료: {space_id}")
 
     # 위치 기준 데이터 가져오기
     async def get_nearby_spaces(self, longitude: float, latitude: float, radius: float) -> List[Dict]:
@@ -200,5 +225,7 @@ class SpaceService:
             del space['_id']
             
         if not nearby_spaces:
+            self._logger.info(f"인근 공간이 없습니다.")
+            self._logger.info(f"lat:{latitude}, long:{longitude}")
             raise HTTPException(status_code=404, detail="인근 공간이 없습니다.")
         return nearby_spaces
