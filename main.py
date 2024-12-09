@@ -22,7 +22,11 @@ from utils.mongodb import MongoDB
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global mongodb
-    env_type = '.env.development' if os.getenv('APP_ENV') == 'development' else '.env.production'
+    env_type = (
+        ".env.development"
+        if os.getenv("APP_ENV") == "development"
+        else ".env.production"
+    )
     load_dotenv(env_type)
 
     mongodb = await MongoDB.get_instance()
@@ -34,14 +38,17 @@ async def lifespan(app: FastAPI):
         await mongodb.close()
         MongoDB._instance = None
 
+
 app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
 
 app.include_router(space_router, prefix="/api/v1/spaces")
 
+
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check(logger: Logger = Depends(Logger.setup_logger)) -> dict:
-    logger.info('health check')
-    return {"status" : "ok"}
+    logger.info("health check")
+    return {"status": "ok"}
+
 
 """Trace"""
 # OpenTelemetry
@@ -51,27 +58,31 @@ trace_provider = TracerProvider(resource=resource)
 # 템포에 데이터 전송을 위한 OLTP span Exporter
 tempo_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
 span_processor = BatchSpanProcessor(tempo_exporter)
-trace_provider.add_span_processor(span_processor) # Span 프로세서 추가
+trace_provider.add_span_processor(span_processor)  # Span 프로세서 추가
 
 trace.set_tracer_provider(trace_provider)
 
 FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
 instrumentator = Instrumentator()
-instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
+instrumentator.instrument(app).expose(app)  # 메트릭(/metrics) 노출
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # TODO: 허용하는 URL 넣어야함
+    allow_origins=["*"],  # TODO: 허용하는 URL 넣어야함
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
 @app.get("/favicon.ico")
 async def favicon():
     return FileResponse("static/favicon.ico")
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=80, reload=True)
