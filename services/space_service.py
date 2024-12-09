@@ -93,7 +93,7 @@ class SpaceService:
         if sido:
             query["location.sido"] = sido
 
-        result_cursor = self.db.spaces.find(query).skip(skip).limit(limit)
+        result_cursor = self.db.spaces.find(query).sort({ "created_at": -1 }).skip(skip).limit(limit)
         spaces = await result_cursor.to_list()
 
         for space in spaces:
