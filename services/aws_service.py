@@ -42,6 +42,7 @@ class AWSService:
             return os.getenv('USER_JWT_SECRET')
         else:
             return self._parameter_store.get_parameter("USER_JWT_SECRET")
+
     
 def get_aws_service() -> AWSService:
     return AWSService()

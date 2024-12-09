@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import Field
 from enums.space_type import SpaceType
+from routers.logging_router import LoggingAPIRoute
 from schemas.common import BaseResponse
 from schemas.payment import PaymentRequest
 from schemas.space_request import SpaceRequest, SpaceUpdateRequest, get_space_form, get_space_update_form
@@ -11,9 +12,7 @@ from services.space_service import SpaceService, get_space_service
 from utils.authenticate import userAuthenticate
 
 
-space_router = APIRouter(
-    tags=["공간"]
-)
+space_router = APIRouter(tags=["공간"], route_class=LoggingAPIRoute)
 
 
 # 위치 기준 데이터
@@ -29,7 +28,7 @@ async def get_nearby_spaces(
 
 
 # 공간 등록
-@space_router.post("/", response_model=SpaceCreateResponse, status_code=status.HTTP_201_CREATED, summary="공간 등록")
+@space_router.post("", response_model=SpaceCreateResponse, status_code=status.HTTP_201_CREATED, summary="공간 등록")
 async def create_space(
     space_data: SpaceRequest = Depends(get_space_form),
     token_info: Dict = Depends(userAuthenticate),
@@ -52,7 +51,7 @@ async def create_space(
 
 
 # 공간 목록 조회
-@space_router.get("/", response_model=List[SpaceListResponse], status_code=status.HTTP_200_OK, summary="공간 목록 조회")
+@space_router.get("", response_model=List[SpaceListResponse], status_code=status.HTTP_200_OK, summary="공간 목록 조회")
 async def get_spaces(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
@@ -114,7 +113,7 @@ async def pre_order_data(
     """구현이 필요하지 않습니다."""
     result_data = await space_service.get_space(payment_request.space_id)
 
-    if payment_request.start_time and payment_request.end_time:
+    if result_data['usage_unit'] == "TIME":
         total_hours = calculate_time_difference(payment_request.start_time, payment_request.end_time)
         total_amount = result_data.get("unit_price") * total_hours
     else:
@@ -123,12 +122,12 @@ async def pre_order_data(
 
     space_data = {
         "space_name": result_data.get("space_name"),
-        "total_amount": total_amount,
-        "quantity": total_hours
+        "total_amount": int(total_amount),
+        "quantity": int(total_hours)
     }
     return space_data
 
-def calculate_time_difference(start_time: datetime, end_time: datetime) -> dict:
+def calculate_time_difference(start_time: str, end_time: str):
     # 시간 차이 계산
     date_format = "%Y-%m-%d %H:%M:%S"
     start_time = datetime.strptime(start_time, date_format)
