@@ -28,10 +28,7 @@ class SpaceRequest(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now, description="생성일")
 
     class Config:
-        json_encoders = {
-            SpaceType: str,
-            UsageType: str
-        }
+        json_encoders = {SpaceType: str, UsageType: str}
 
 
 async def get_space_form(
@@ -47,9 +44,9 @@ async def get_space_form(
     description: Annotated[str, Form(description="한줄 소개")],
     content: Annotated[str, Form(description="내용")],
     operating_hour: Annotated[str, Form(description="운영 시간 (JSON)")],
-    images: Annotated[List[UploadFile], Form(description="공간 이미지")]
+    images: Annotated[List[UploadFile], Form(description="공간 이미지")],
 ) -> SpaceRequest:
-    
+
     return SpaceRequest(
         user_id=user_id,
         space_type=SpaceType(space_type),
@@ -59,11 +56,11 @@ async def get_space_form(
         usage_unit=UsageType(usage_unit),
         unit_price=unit_price,
         location=json.loads(location),
-        amenities=set(amenities), 
+        amenities=set(amenities),
         description=description,
         content=content,
         operating_hour=json.loads(operating_hour),
-        images=images
+        images=images,
     )
 
 
@@ -77,12 +74,9 @@ class SpaceUpdateRequest(BaseModel):
     operating_hour: List[OperatingHour] = Field(description="운영 시간")
     is_operate: bool = Field(default=True, description="운영 여부")
     images: List[UploadFile] = Field(description="공간 이미지")
-    
+
     class Config:
-        json_encoders = {
-            SpaceType: str,
-            UsageType: str
-        }
+        json_encoders = {SpaceType: str, UsageType: str}
 
 
 async def get_space_update_form(
@@ -93,16 +87,16 @@ async def get_space_update_form(
     description: Annotated[str, Form(description="한줄 소개")],
     content: Annotated[str, Form(description="내용")],
     operating_hour: Annotated[str, Form(description="운영 시간 (JSON)")],
-    images: Annotated[List[UploadFile], Form(description="공간 이미지")]
+    images: Annotated[List[UploadFile], Form(description="공간 이미지")],
 ) -> SpaceUpdateRequest:
-    
+
     return SpaceUpdateRequest(
         capacity=capacity,
         usage_unit=UsageType(usage_unit),
         unit_price=unit_price,
-        amenities=amenities, 
+        amenities=amenities,
         description=description,
         content=content,
         operating_hour=json.loads(operating_hour),
-        images=images
+        images=images,
     )
