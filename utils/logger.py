@@ -3,8 +3,10 @@ import logging.config
 from pathlib import Path
 from datetime import datetime
 
+
 class Logger:
     logger = None
+    _log_level = "DEBUG"
 
     @staticmethod
     def setup_logger():
@@ -18,33 +20,30 @@ class Logger:
             daily_log_dir.mkdir(exist_ok=True)
 
             log_config = {
-                'version': 1,
-                'formatters': {
-                    'detailed': {
-                        'format': '[%(asctime)s.%(msecs)03d] %(levelname)s [%(thread)d] - %(message)s',
-                        'datefmt': '%Y-%m-%d %H:%M:%S'
+                "version": 1,
+                "formatters": {
+                    "detailed": {
+                        "format": "[%(asctime)s.%(msecs)03d] %(levelname)s [%(thread)d] - %(message)s",
+                        "datefmt": "%Y-%m-%d %H:%M:%S",
                     }
                 },
-                'handlers': {
-                    'console': {
-                        'class': 'logging.StreamHandler',
-                        'level': 'INFO',
-                        'formatter': 'detailed'
+                "handlers": {
+                    "console": {
+                        "class": "logging.StreamHandler",
+                        "level": Logger._log_level,
+                        "formatter": "detailed",
                     },
-                    'file': {
-                        'class': 'logging.handlers.RotatingFileHandler',
-                        'level': 'INFO',
-                        'formatter': 'detailed',
-                        'filename': str(daily_log_dir / 'logfile.log'),
-                        'maxBytes': 1024 * 1024,  # 1mb
-                        'backupCount': 10,
-                        'encoding': 'utf-8'
-                    }
+                    "file": {
+                        "class": "logging.handlers.RotatingFileHandler",
+                        "level": Logger._log_level,
+                        "formatter": "detailed",
+                        "filename": str(daily_log_dir / "logfile.log"),
+                        "maxBytes": 1024 * 1024,  # 1mb
+                        "backupCount": 10,
+                        "encoding": "utf-8",
+                    },
                 },
-                'root': {
-                    'level': 'INFO',
-                    'handlers': ['console', 'file']
-                }
+                "root": {"level": Logger._log_level, "handlers": ["console", "file"]},
             }
 
             logging.config.dictConfig(log_config)
