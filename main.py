@@ -6,12 +6,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from prometheus_fastapi_instrumentator import Instrumentator
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.semconv.resource import ResourceAttributes
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor
+# from opentelemetry.sdk.resources import Resource
+# from opentelemetry.semconv.resource import ResourceAttributes
+# from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
 from routers.space import space_router
 from utils import mongodb
@@ -55,9 +55,9 @@ async def health_check(logger: Logger = Depends(Logger.setup_logger)) -> dict:
 
 # trace.set_tracer_provider(trace_provider)
 
-# FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
-# instrumentator = Instrumentator()
-# instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
+FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/favicon.ico")
