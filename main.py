@@ -16,6 +16,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from routers.space import space_router
 from utils import mongodb
 from utils.logger import Logger
+from utils.logging_middleware import LoggingMiddleware
 from utils.mongodb import MongoDB
 
 
@@ -35,6 +36,7 @@ async def lifespan(app: FastAPI):
         MongoDB._instance = None
 
 app = FastAPI(title="공간 API", version="ver.1", lifespan=lifespan)
+app.add_middleware(LoggingMiddleware)
 
 app.include_router(space_router, prefix="/api/v1/spaces")
 
