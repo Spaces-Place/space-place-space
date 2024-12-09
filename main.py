@@ -59,14 +59,6 @@ FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"], # TODO: 허용하는 URL 넣어야함
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/favicon.ico")
 async def favicon():
