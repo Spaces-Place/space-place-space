@@ -43,21 +43,21 @@ async def health_check(logger: Logger = Depends(Logger.setup_logger)) -> dict:
     logger.info('health check')
     return {"status" : "ok"}
 
-"""Trace"""
-# OpenTelemetry
-resource = Resource.create({ResourceAttributes.SERVICE_NAME: "space-service"})
-trace_provider = TracerProvider(resource=resource)
+# """Trace"""
+# # OpenTelemetry
+# resource = Resource.create({ResourceAttributes.SERVICE_NAME: "space-service"})
+# trace_provider = TracerProvider(resource=resource)
 
-# 템포에 데이터 전송을 위한 OLTP span Exporter
-tempo_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
-span_processor = BatchSpanProcessor(tempo_exporter)
-trace_provider.add_span_processor(span_processor) # Span 프로세서 추가
+# # 템포에 데이터 전송을 위한 OLTP span Exporter
+# tempo_exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
+# span_processor = BatchSpanProcessor(tempo_exporter)
+# trace_provider.add_span_processor(span_processor) # Span 프로세서 추가
 
-trace.set_tracer_provider(trace_provider)
+# trace.set_tracer_provider(trace_provider)
 
-FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
-instrumentator = Instrumentator()
-instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
+# FastAPIInstrumentor.instrument_app(app, excluded_urls="client/.*/health")
+# instrumentator = Instrumentator()
+# instrumentator.instrument(app).expose(app) # 메트릭(/metrics) 노출
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/favicon.ico")
