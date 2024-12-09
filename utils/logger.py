@@ -6,7 +6,7 @@ from datetime import datetime
 
 class Logger:
     logger = None
-    _log_level = "DEBUG"
+    _log_level = "INFO"
 
     @staticmethod
     def setup_logger():
